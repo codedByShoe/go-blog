@@ -11,7 +11,7 @@ import (
 
 type Handler interface {
 	GetAllPosts(w http.ResponseWriter, r *http.Request)
-	GetPostByID(w http.ResponseWriter, r *http.Request)
+	GetSinglePost(w http.ResponseWriter, r *http.Request)
 	CreatePost(w http.ResponseWriter, r *http.Request)
 	UpdatePost(w http.ResponseWriter, r *http.Request)
 	DeletePost(w http.ResponseWriter, r *http.Request)
@@ -26,7 +26,7 @@ func NewHandler(s Service) Handler {
 }
 
 func (h *handler) GetAllPosts(w http.ResponseWriter, r *http.Request) {
-	posts, err := getAllPosts()
+	posts, err := h.service.GetAllPosts()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -34,7 +34,7 @@ func (h *handler) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 	utils.RenderTemplate(w, "index.html", posts)
 }
 
-func (h *handler) GetPostByID(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetSinglePost(w http.ResponseWriter, r *http.Request) {
 	// Exctract the post ID from the url
 	path := r.URL.Path
 	idStr := strings.TrimPrefix(path, "/posts/")
@@ -43,7 +43,7 @@ func (h *handler) GetPostByID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return
 	}
-	post, err := getPostByID(id)
+	post, err := h.service.GetPostByID(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -55,11 +55,12 @@ func (h *handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		tmpl := template.Must(template.ParseFiles("templates/create_post.html"))
 		tmpl.Execute(w, nil)
+		utils.RenderTemplate(w, "create_post.html", nil)
 	} else if r.Method == "POST" {
 		title := r.FormValue("title")
 		content := r.FormValue("content")
 
-		if err := createPost(title, content); err != nil {
+		if err := h.service.CreatePost(title, content); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -74,7 +75,7 @@ func (h *handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Invalid ID", http.StatusBadRequest)
 			return
 		}
-		post, err := getPostByID(id)
+		post, err := h.service.GetPostByID(id)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -89,7 +90,7 @@ func (h *handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 		title := r.FormValue("title")
 		content := r.FormValue("content")
 
-		if err := updatePost(id, title, content); err != nil {
+		if err := h.service.UpdatePost(id, title, content); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -104,7 +105,7 @@ func (h *handler) DeletePost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return
 	}
-	if err := deletePost(id); err != nil {
+	if err := h.service.DeletePost(id); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

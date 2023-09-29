@@ -7,8 +7,8 @@ import (
 )
 
 func RenderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
-	layout := "web/templates/layout.html"
-	path := fmt.Sprintf("web/templates/%s", tmpl)
+	layout := "../web/templates/layout.html"
+	path := fmt.Sprintf("../web/templates/%s", tmpl)
 	t, err := template.ParseFiles(path, layout)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

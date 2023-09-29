@@ -8,6 +8,11 @@ import (
 
 type Repository interface {
 	// Define Methods
+	GetAllPosts() ([]Post, error)
+	GetPostByID(id int) (*Post, error)
+	CreatePost(title string, content string) error
+	UpdatePost(id int, title string, content string) error
+	DeletePost(id int) error
 }
 
 type postRepository struct {
@@ -36,7 +41,7 @@ func (r *postRepository) GetAllPosts() ([]Post, error) {
 	return posts, nil
 }
 
-func (r *postRepository) getPostByID(id int) (*Post, error) {
+func (r *postRepository) GetPostByID(id int) (*Post, error) {
 	// Fetch the post
 	row := r.db.QueryRow("SELECT id, title, content FROM posts WHERE id = ?", id)
 	var p Post
@@ -64,17 +69,17 @@ func (r *postRepository) getPostByID(id int) (*Post, error) {
 	return &p, nil
 }
 
-func (r *postRepository) createPost(title string, content string) error {
+func (r *postRepository) CreatePost(title string, content string) error {
 	_, err := r.db.Exec("INSERT INTO posts (title, content) VALUES (?, ?)", title, content)
 	return err
 }
 
-func (r *postRepository) updatePost(id int, title string, content string) error {
+func (r *postRepository) UpdatePost(id int, title string, content string) error {
 	_, err := r.db.Exec("UPDATE posts SET title = ?, content = ? WHERE id = ?", title, content, id)
 	return err
 }
 
-func (r *postRepository) deletePost(id int) error {
+func (r *postRepository) DeletePost(id int) error {
 	_, err := r.db.Exec("DELETE FROM posts WHERE id = ?", id)
 	return err
 }
