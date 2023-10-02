@@ -6,6 +6,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/codedbyshoe/go-blog/pkg/user"
 	"github.com/codedbyshoe/go-blog/utils"
 )
 
@@ -20,6 +21,12 @@ type Handler interface {
 type handler struct {
 	service Service
 }
+type PageData struct {
+	Title   string
+	Content string
+	Posts   any
+	User    *user.User
+}
 
 func NewHandler(s Service) Handler {
 	return &handler{service: s}
@@ -31,7 +38,12 @@ func (h *handler) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	utils.RenderTemplate(w, "index.html", posts)
+	loggedInUser := user.GetLoggedInUser()
+	data := PageData{
+		Posts: posts,
+		User:  loggedInUser,
+	}
+	utils.RenderTemplate(w, "index.html", data)
 }
 
 func (h *handler) GetSinglePost(w http.ResponseWriter, r *http.Request) {

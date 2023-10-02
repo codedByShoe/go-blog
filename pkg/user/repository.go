@@ -35,7 +35,7 @@ func (r *userRepository) CreateUser(user *User) error {
 
 func (r *userRepository) GetUserByUsername(username string) (*User, error) {
 	user := &User{}
-	err := r.db.QueryRow("SELECT id, username, email FROM users WHERE username = ?", username).Scan(&user.ID, &user.Username, &user.Password, &user.Email)
+	err := r.db.QueryRow("SELECT id, username, password, email FROM users WHERE username = ?", username).Scan(&user.ID, &user.Username, &user.Password, &user.Email)
 
 	if err != nil {
 		return nil, err

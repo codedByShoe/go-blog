@@ -1,12 +1,16 @@
 package user
 
 import (
-	"github.com/codedbyshoe/go-blog/utils"
+	"fmt"
 	"net/http"
+
+	"github.com/codedbyshoe/go-blog/utils"
 )
 
 type Handler interface {
 	Register(w http.ResponseWriter, r *http.Request)
+	Login(w http.ResponseWriter, r *http.Request)
+	Logout(w http.ResponseWriter, r *http.Request)
 }
 
 type handler struct {
@@ -29,7 +33,7 @@ func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
 		email := r.FormValue("email")
 
 		// Create a new user instance
-		user := &user.User{
+		user := &User{
 			Username: username,
 			Password: password,
 			Email:    email,
@@ -59,15 +63,28 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 		user, err := h.service.Login(username, password)
 
 		if err != nil {
+			fmt.Println(err)
 			http.Error(w, "Invalid Login Credentials", http.StatusUnauthorized)
 			return
 		}
 
 		// TODO: set up session for logged in user
+		session, _ := utils.Store.Get(r, "user-session")
+		session.Values["user-id"] = user.ID
+		session.Save(r, w)
+
+		SetLoggedInUser(user)
 
 		// Redirect to a protected page or the home page idk yet
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	default:
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+func (h *handler) Logout(w http.ResponseWriter, r *http.Request) {
+	session, _ := utils.Store.Get(r, "user-session")
+	session.Options.MaxAge = -1
+	session.Save(r, w)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
