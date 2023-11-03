@@ -16,6 +16,9 @@
 				<a href="/" class="btn btn-ghost normal-case text-xl">MyBlog</a>
 			</div>
 			<div class="flex-none">
+				<!-- {{ with .User }} -->
+				<!-- <p>Welcome, {{ .Username }}</p> -->
+				<!-- {{end}} -->
 				<ul class="menu menu-horizontal px-1">
 					<li><a href="/">Home</a></li>
 					<li><a href="/login">Login</a></li>
@@ -29,7 +32,7 @@
 		{{ template "content" . }}
 	</main>
 	<footer>
-		<p class="mt-12 p-4 text-center text-lg">MyBlog&copy; 2023</p>
+		<p class="mt-12 p-4 text-center text-lg">MyBlog &copy; 2023</p>
 	</footer>
 </body>
 

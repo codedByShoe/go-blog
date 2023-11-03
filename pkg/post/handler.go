@@ -24,7 +24,7 @@ type handler struct {
 type PageData struct {
 	Title   string
 	Content string
-	Posts   any
+	Posts   []Post
 	User    *user.User
 }
 
