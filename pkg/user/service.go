@@ -11,15 +11,15 @@ type Service interface {
 	Login(username string, password string) (*User, error)
 }
 
-type service struct {
+type userService struct {
 	repo Repository
 }
 
-func NewService(r Repository) Service {
-	return &service{repo: r}
+func NewUserService(r Repository) Service {
+	return &userService{repo: r}
 }
 
-func (s *service) Register(user *User) error {
+func (s *userService) Register(user *User) error {
 	existingUser, err := s.repo.GetUserByUsername(user.Username)
 	if err == nil && existingUser != nil {
 		return errors.New("username already taken")
@@ -27,7 +27,7 @@ func (s *service) Register(user *User) error {
 	return s.repo.CreateUser(user)
 }
 
-func (s *service) Login(username string, password string) (*User, error) {
+func (s *userService) Login(username string, password string) (*User, error) {
 	user, err := s.repo.GetUserByUsername(username)
 
 	if err != nil {

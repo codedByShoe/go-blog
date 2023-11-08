@@ -12,19 +12,19 @@ type Service interface {
 	DeletePost(id int) error
 }
 
-type service struct {
+type postService struct {
 	repo Repository
 }
 
-func NewService(r Repository) Service {
-	return &service{repo: r}
+func NewPostService(r Repository) Service {
+	return &postService{repo: r}
 }
 
-func (s *service) GetAllPosts() ([]Post, error) {
+func (s *postService) GetAllPosts() ([]Post, error) {
 	return s.repo.GetAllPosts()
 }
 
-func (s *service) GetPostByID(id int) (*Post, error) {
+func (s *postService) GetPostByID(id int) (*Post, error) {
 	// example of handling business logic
 	if id <= 0 {
 		return nil, ErrInvalidID
@@ -32,14 +32,14 @@ func (s *service) GetPostByID(id int) (*Post, error) {
 	return s.repo.GetPostByID(id)
 }
 
-func (s *service) CreatePost(title string, content string) error {
+func (s *postService) CreatePost(title string, content string) error {
 	return s.repo.CreatePost(title, content)
 }
 
-func (s *service) UpdatePost(id int, title string, content string) error {
+func (s *postService) UpdatePost(id int, title string, content string) error {
 	return s.repo.UpdatePost(id, title, content)
 }
 
-func (s *service) DeletePost(id int) error {
+func (s *postService) DeletePost(id int) error {
 	return s.repo.DeletePost(id)
 }

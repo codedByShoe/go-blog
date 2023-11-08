@@ -4,14 +4,14 @@ type Service interface {
 	AddCommentToPost(postId int, author string, content string) error
 }
 
-type service struct {
+type commentService struct {
 	repo Repository
 }
 
-func NewService(r Repository) Service {
-	return &service{repo: r}
+func NewCommentService(r Repository) Service {
+	return &commentService{repo: r}
 }
 
-func (s *service) AddCommentToPost(postId int, author string, content string) error {
+func (s *commentService) AddCommentToPost(postId int, author string, content string) error {
 	return s.repo.AddComment(postId, author, content)
 }

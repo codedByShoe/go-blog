@@ -6,8 +6,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/codedbyshoe/go-blog/pkg/templates"
 	"github.com/codedbyshoe/go-blog/pkg/user"
-	"github.com/codedbyshoe/go-blog/utils"
 )
 
 type Handler interface {
@@ -18,35 +18,40 @@ type Handler interface {
 	DeletePost(w http.ResponseWriter, r *http.Request)
 }
 
-type handler struct {
-	service Service
-}
-type PageData struct {
-	Title   string
-	Content string
-	Posts   []Post
-	User    *user.User
+type postHandler struct {
+	service         Service
+	templateService *templates.TemplateService
 }
 
-func NewHandler(s Service) Handler {
-	return &handler{service: s}
+func NewPostHandler(s Service, templateService *templates.TemplateService) Handler {
+	return &postHandler{
+		service:         s,
+		templateService: templateService,
+	}
 }
 
-func (h *handler) GetAllPosts(w http.ResponseWriter, r *http.Request) {
+func (h *postHandler) GetAllPosts(w http.ResponseWriter, r *http.Request) {
 	posts, err := h.service.GetAllPosts()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	loggedInUser := user.GetLoggedInUser()
-	data := PageData{
-		Posts: posts,
-		User:  loggedInUser,
+
+	var data struct {
+		Title   string
+		Content string
+		Posts   []Post
+		User    *user.User
 	}
-	utils.RenderTemplate(w, "index.html", data)
+
+	data.Posts = posts
+	data.User = loggedInUser
+
+	h.templateService.Render(w, "index.html", "layout.html", data)
 }
 
-func (h *handler) GetSinglePost(w http.ResponseWriter, r *http.Request) {
+func (h *postHandler) GetSinglePost(w http.ResponseWriter, r *http.Request) {
 	// Exctract the post ID from the url
 	path := r.URL.Path
 	idStr := strings.TrimPrefix(path, "/posts/")
@@ -60,14 +65,14 @@ func (h *handler) GetSinglePost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	utils.RenderTemplate(w, "single_post.html", post)
+	h.templateService.Render(w, "single_post.html", "layout.html", post)
 }
 
-func (h *handler) CreatePost(w http.ResponseWriter, r *http.Request) {
+func (h *postHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		tmpl := template.Must(template.ParseFiles("templates/create_post.html"))
 		tmpl.Execute(w, nil)
-		utils.RenderTemplate(w, "create_post.html", nil)
+		h.templateService.Render(w, "create_post.html", "layout.html", nil)
 	} else if r.Method == "POST" {
 		title := r.FormValue("title")
 		content := r.FormValue("content")
@@ -80,7 +85,7 @@ func (h *handler) CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
+func (h *postHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		id, err := strconv.Atoi(r.URL.Query().Get("id"))
 		if err != nil {
@@ -92,7 +97,7 @@ func (h *handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		utils.RenderTemplate(w, "update_post.html", post)
+		h.templateService.Render(w, "update_post.html", "layout.html", post)
 	} else if r.Method == "POST" {
 		id, err := strconv.Atoi(r.FormValue("id"))
 		if err != nil {
@@ -110,7 +115,7 @@ func (h *handler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *handler) DeletePost(w http.ResponseWriter, r *http.Request) {
+func (h *postHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {

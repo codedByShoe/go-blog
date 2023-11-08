@@ -4,21 +4,27 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"github.com/codedbyshoe/go-blog/pkg/templates"
 )
 
 type Handler interface {
 	AddComment(w http.ResponseWriter, r *http.Request)
 }
 
-type handler struct {
-	service Service
+type commentHandler struct {
+	service         Service
+	templateService *templates.TemplateService
 }
 
-func NewHandler(s Service) Handler {
-	return &handler{service: s}
+func NewCommentHandler(s Service, templateService *templates.TemplateService) Handler {
+	return &commentHandler{
+		service:         s,
+		templateService: templateService,
+	}
 }
 
-func (h *handler) AddComment(w http.ResponseWriter, r *http.Request) {
+func (h *commentHandler) AddComment(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return

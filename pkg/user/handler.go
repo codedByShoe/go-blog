@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/codedbyshoe/go-blog/pkg/templates"
 	"github.com/codedbyshoe/go-blog/utils"
 )
 
@@ -13,19 +14,23 @@ type Handler interface {
 	Logout(w http.ResponseWriter, r *http.Request)
 }
 
-type handler struct {
-	service Service
+type userHandler struct {
+	service         Service
+	templateService *templates.TemplateService
 }
 
-func NewHandler(s Service) Handler {
-	return &handler{service: s}
+func NewUserHandler(s Service, templateService *templates.TemplateService) Handler {
+	return &userHandler{
+		service:         s,
+		templateService: templateService,
+	}
 }
 
-func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
+func (h *userHandler) Register(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		// render the registration form
-		utils.RenderTemplate(w, "auth/register.html", nil)
+		h.templateService.Render(w, "auth/register.html", "layout.html", nil)
 	case "POST":
 		// process the form submission
 		username := r.FormValue("username")
@@ -52,10 +57,10 @@ func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
+func (h *userHandler) Login(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		utils.RenderTemplate(w, "auth/login.html", nil)
+		h.templateService.Render(w, "auth/login.html", "layout.html", nil)
 	case "POST":
 		username := r.FormValue("username")
 		password := r.FormValue("password")
@@ -82,7 +87,7 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *handler) Logout(w http.ResponseWriter, r *http.Request) {
+func (h *userHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	session, _ := utils.Store.Get(r, "user-session")
 	session.Options.MaxAge = -1
 	session.Save(r, w)
