@@ -19,19 +19,19 @@ type Handler interface {
 }
 
 type postHandler struct {
-	service         Service
+	repo            Repository
 	templateService *templates.TemplateService
 }
 
-func NewPostHandler(s Service, templateService *templates.TemplateService) Handler {
+func NewPostHandler(repository Repository, templateService *templates.TemplateService) Handler {
 	return &postHandler{
-		service:         s,
+		repo:            repository,
 		templateService: templateService,
 	}
 }
 
 func (h *postHandler) GetAllPosts(w http.ResponseWriter, r *http.Request) {
-	posts, err := h.service.GetAllPosts()
+	posts, err := h.repo.GetAllPosts()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -60,45 +60,51 @@ func (h *postHandler) GetSinglePost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return
 	}
-	post, err := h.service.GetPostByID(id)
+	post, err := h.repo.GetPostByID(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	h.templateService.Render(w, "single_post.html", "layout.html", post)
 }
 
 func (h *postHandler) CreatePost(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" {
+	switch r.Method {
+	case "GET":
 		tmpl := template.Must(template.ParseFiles("templates/create_post.html"))
 		tmpl.Execute(w, nil)
 		h.templateService.Render(w, "create_post.html", "layout.html", nil)
-	} else if r.Method == "POST" {
+	case "POST":
 		title := r.FormValue("title")
 		content := r.FormValue("content")
 
-		if err := h.service.CreatePost(title, content); err != nil {
+		if err := h.repo.CreatePost(title, content); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		http.Redirect(w, r, "/posts", http.StatusSeeOther)
+	default:
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 	}
+
 }
 
 func (h *postHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" {
+	switch r.Method {
+	case "GET":
 		id, err := strconv.Atoi(r.URL.Query().Get("id"))
 		if err != nil {
 			http.Error(w, "Invalid ID", http.StatusBadRequest)
 			return
 		}
-		post, err := h.service.GetPostByID(id)
+		post, err := h.repo.GetPostByID(id)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		h.templateService.Render(w, "update_post.html", "layout.html", post)
-	} else if r.Method == "POST" {
+	case "POST":
 		id, err := strconv.Atoi(r.FormValue("id"))
 		if err != nil {
 			http.Error(w, "Invalid ID", http.StatusBadRequest)
@@ -107,11 +113,14 @@ func (h *postHandler) UpdatePost(w http.ResponseWriter, r *http.Request) {
 		title := r.FormValue("title")
 		content := r.FormValue("content")
 
-		if err := h.service.UpdatePost(id, title, content); err != nil {
+		if err := h.repo.UpdatePost(id, title, content); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		http.Redirect(w, r, "/posts", http.StatusSeeOther)
+
+	default:
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 	}
 }
 
@@ -122,7 +131,7 @@ func (h *postHandler) DeletePost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return
 	}
-	if err := h.service.DeletePost(id); err != nil {
+	if err := h.repo.DeletePost(id); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

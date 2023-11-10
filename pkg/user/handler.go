@@ -1,11 +1,11 @@
 package user
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/codedbyshoe/go-blog/pkg/templates"
-	"github.com/codedbyshoe/go-blog/utils"
+	"github.com/gorilla/sessions"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Handler interface {
@@ -15,14 +15,16 @@ type Handler interface {
 }
 
 type userHandler struct {
-	service         Service
+	repo            Repository
 	templateService *templates.TemplateService
+	store           sessions.CookieStore
 }
 
-func NewUserHandler(s Service, templateService *templates.TemplateService) Handler {
+func NewUserHandler(r Repository, templateService *templates.TemplateService, store sessions.CookieStore) Handler {
 	return &userHandler{
-		service:         s,
+		repo:            r,
 		templateService: templateService,
+		store:           store,
 	}
 }
 
@@ -44,10 +46,10 @@ func (h *userHandler) Register(w http.ResponseWriter, r *http.Request) {
 			Email:    email,
 		}
 		// User the service to reqister the user
-		err := h.service.Register(user)
-
-		if err != nil {
-			http.Error(w, "Failed to register", http.StatusInternalServerError)
+		existingUser, err := h.repo.GetUserByUsername(user.Username)
+		if err == nil && existingUser != nil {
+			// TODO: this most likely needs to be changed to a redirect with flash messages
+			http.Error(w, "username already taken", http.StatusUnauthorized)
 			return
 		}
 		// on success redirect to login page
@@ -65,16 +67,15 @@ func (h *userHandler) Login(w http.ResponseWriter, r *http.Request) {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 
-		user, err := h.service.Login(username, password)
+		user, err := h.repo.GetUserByUsername(username)
 
-		if err != nil {
-			fmt.Println(err)
+		if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 			http.Error(w, "Invalid Login Credentials", http.StatusUnauthorized)
 			return
 		}
 
 		// TODO: set up session for logged in user
-		session, _ := utils.Store.Get(r, "user-session")
+		session, _ := h.store.Get(r, "user-session")
 		session.Values["user-id"] = user.ID
 		session.Save(r, w)
 
@@ -88,7 +89,7 @@ func (h *userHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *userHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	session, _ := utils.Store.Get(r, "user-session")
+	session, _ := h.store.Get(r, "user-session")
 	session.Options.MaxAge = -1
 	session.Save(r, w)
 	http.Redirect(w, r, "/", http.StatusSeeOther)

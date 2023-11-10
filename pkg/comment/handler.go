@@ -13,36 +13,39 @@ type Handler interface {
 }
 
 type commentHandler struct {
-	service         Service
+	repo            Repository
 	templateService *templates.TemplateService
 }
 
-func NewCommentHandler(s Service, templateService *templates.TemplateService) Handler {
+func NewCommentHandler(r Repository, templateService *templates.TemplateService) Handler {
 	return &commentHandler{
-		service:         s,
+		repo:            r,
 		templateService: templateService,
 	}
 }
 
 func (h *commentHandler) AddComment(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+	switch r.Method {
+	case "POST":
+		author := r.FormValue("author")
+		content := r.FormValue("content")
+		postIdStr := r.FormValue("post_id")
+		postId, err := strconv.Atoi(postIdStr)
+		if err != nil {
+			http.Error(w, "Invalid ID", http.StatusBadRequest)
+			return
+		}
+
+		if err := h.repo.AddComment(postId, author, content); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		// Redirect back to the respective post
+		redirectURL := fmt.Sprintf("/posts/%d", postId)
+		http.Redirect(w, r, redirectURL, http.StatusSeeOther)
+	default:
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	author := r.FormValue("author")
-	content := r.FormValue("content")
-	postIdStr := r.FormValue("post_id")
-	postId, err := strconv.Atoi(postIdStr)
-	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
-	}
 
-	if err := h.service.AddCommentToPost(postId, author, content); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	// Redirect back to the respective post
-	redirectURL := fmt.Sprintf("/posts/%d", postId)
-	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
