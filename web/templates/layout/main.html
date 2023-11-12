@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html data-theme="lofi">
+
+<head>
+	<title>Fiber Blog</title>
+	<!-- Add your CSS link here -->
+	<link href="https://cdn.jsdelivr.net/npm/daisyui@3.7.6/dist/full.css" rel="stylesheet" type="text/css" />
+	<script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body>
+	<header>
+		<div class="navbar bg-base-100">
+			<div class="flex-1">
+				<a href="/" class="btn btn-ghost normal-case text-xl">MyBlog</a>
+			</div>
+			<div class="flex-none">
+
+				<ul class="menu menu-horizontal px-1">
+					<li><a href="/">Home</a></li>
+					<li><a href="/login">Login</a></li>
+					<li><a href="/register">Register</a></li>
+
+				</ul>
+			</div>
+		</div>
+	</header>
+	<main class="container mx-auto px-4 my-12">
+		{{embed}}
+	</main>
+	<footer>
+		<p class="mt-12 p-4 text-center text-lg">MyBlog &copy; 2023</p>
+	</footer>
+</body>
+
+</html>

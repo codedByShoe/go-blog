@@ -9,7 +9,7 @@ tmp_dir = "tmp"
 # Array of commands to run before each build
 pre_cmd = ["echo 'hello air' > pre_cmd.txt"]
 # Just plain old shell command. You could use `make` as well.
-cmd = "go build -o ./tmp/main cmd/go-blog/main.go"
+cmd = "go build -o ./tmp/main ./main.go"
 # Array of commands to run after ^C
 post_cmd = ["echo 'hello air' > post_cmd.txt"]
 # Binary file yields from `cmd`.
@@ -21,9 +21,9 @@ include_ext = ["go", "tpl", "tmpl", "html"]
 # Ignore these filename extensions or directories.
 exclude_dir = ["assets", "tmp", "vendor", "frontend/node_modules"]
 # Watch these directories if you specified.
-include_dir = ["cmd", "pkg", "web"]
+include_dir = [".","internal", "web"]
 # Watch these files.
-include_file = []
+include_file = ["main.go"]
 # Exclude files.
 exclude_file = []
 # Exclude specific regular expressions.

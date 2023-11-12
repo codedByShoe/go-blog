@@ -1,0 +1,10 @@
+{{define "content"}}
+<h1>Update Post</h1>
+
+<form action="/update_post" method="post">
+	<input type="hidden" name="id" value="{{.ID}}">
+	Title: <input type="text" name="title" value="{{.Title}}"><br>
+	Content: <textarea name="content">{{.Content}}</textarea><br>
+	<input type="submit" value="Update">
+</form>
+{{end}}
